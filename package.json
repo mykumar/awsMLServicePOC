@@ -1,8 +1,9 @@
 {
   "dependencies": {
     "aws-sdk": ">= 2.0.9",
-    "bluebird": "^3.4.6",
-    "node-uuid": ">= 1.4.1",
+    "collections": "^5.0.5",
+    "express": "^4.14.0",
+    "node-uuid": "^1.4.7",
     "wait.for": "^0.6.6"
   }
 }
