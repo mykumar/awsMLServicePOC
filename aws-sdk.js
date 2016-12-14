@@ -24,9 +24,11 @@ sdklib.prototype.init = function (customConsole) {
 	this.dsId = null;
 	this.dsName = null;
 	this.mlId =  null;
-	this.mlName = null;
+	this.mlName = null;	this.evalId = null;
+    this.evalName = null;
 }
-sdklib.prototype.createDataSource = function () {
+//-------------------------CREATE--------------------------------
+sdklib.prototype.createDataSource = function (req,res) {
 	this.console.printConsole('createDataSource Method');
 	this.dsId = this.uuid.v4();
 	this.dsName = 'node-dsname-'+ this.dsId;
@@ -50,16 +52,17 @@ sdklib.prototype.createDataSource = function () {
 
     this.machinelearning.createDataSourceFromS3(paramsDS, function(err, data) {
       if (err) {
-        console.log(err, err.stack); // an error occurred
+        this.console.printConsole(err, err.stack); // an error occurred
       }  
       else {
-        // console.log('-------------------------------------------------------JOY');
+        // this.console.printConsole('-------------------------------------------------------JOY');
         this.console.printConsole(data);           // successful response    
         this.console.printConsole(data.DataSourceId);
+        res.send(data);
       }
     }.bind(this));    
 };
-sdklib.prototype.createMLModel = function () {
+sdklib.prototype.createMLModel = function (req,res) {
 	this.console.printConsole('createMLModel Method');
 	this.console.printConsole('This is DS Nmae :::::: ' + this.dsName);
 	this.console.printConsole('This is DS Nmae :::::: ' + this.dsId);
@@ -72,9 +75,9 @@ sdklib.prototype.createMLModel = function () {
 	};
 	this.machinelearning.waitFor('dataSourceAvailable', paramsDS, function(err, data) {
 	this.console.printConsole('-------------------- waitFor ::  dataSourceAvailable --------------------');
-	 if (err) console.log(err, err.stack); // an error occurred
+	 if (err) this.console.printConsole(err, err.stack); // an error occurred
 	  	else {
-	  		console.log(data);           // successful response
+	  		this.console.printConsole(data);           // successful response
 	  		this.console.printConsole(data.Results[0].Status);
 	  		if(data.Results[0].Status.toUpperCase() === 'COMPLETED'.toUpperCase()) {
 	  			this.console.printConsole('Data Source ::: ' + this.dsId + 'Status is completed**');
@@ -93,7 +96,7 @@ sdklib.prototype.createMLModel = function () {
 			      Recipe: recipeContents
 			    };
 			    this.machinelearning.createMLModel(paramsML, function(err, data) {
-		          if (err) console.log(err, err.stack); // an error occurred
+		          if (err) this.console.printConsole(err, err.stack); // an error occurred
 		          else     { 
 		          	this.console.printDir("Create ML Model COmpleted :::", data);
 		          } 	
@@ -102,7 +105,7 @@ sdklib.prototype.createMLModel = function () {
   		}				
 	}.bind(this));
 };	
-sdklib.prototype.createEvaluation = function () {
+sdklib.prototype.createEvaluation = function (req,res) {
 	this.console.printConsole('createEvaluation Method');
 	this.evalId = this.uuid.v4();
     this.evalName = 'node-Evaluation-' + this.evalId;
@@ -118,9 +121,9 @@ sdklib.prototype.createEvaluation = function () {
 	};
 	this.machinelearning.waitFor('mLModelAvailable', paramsDS, function(err, data) {
 	  	this.console.printConsole('-------------------- waitFor ::  mLModelAvailable --------------------');
-	 	if (err) console.log(err, err.stack); // an error occurred
+	 	if (err) this.console.printConsole(err, err.stack); // an error occurred
 	  	else {
-	  		console.log(data);           // successful response
+	  		this.console.printConsole(data);           // successful response
 	  		this.console.printConsole(data.Results[0].Status);
 	  		if(data.Results[0].Status.toUpperCase() === 'COMPLETED'.toUpperCase()) {
 	  			this.console.printConsole('MLModel ::: ' + this.mlName + 'Status is completed**');
@@ -131,7 +134,7 @@ sdklib.prototype.createEvaluation = function () {
 	              EvaluationName: this.evalName
 	            };
 			    this.machinelearning.createEvaluation(paramsEvaluation, function(err, data) {
-		          if (err) console.log(err, err.stack); // an error occurred
+		          if (err) this.console.printConsole(err, err.stack); // an error occurred
 		          else     { 
 		          	this.console.printDir("Create ML Model COmpleted :::", data);
 		          } 	
@@ -140,6 +143,7 @@ sdklib.prototype.createEvaluation = function () {
   		}				
 	}.bind(this));
 };	
+//-------------------------PREDICT--------------------------------
 sdklib.prototype.createPredict = function (req,res) {
 	this.console.printConsole('createPredict Method');
 	var params = {
@@ -147,10 +151,10 @@ sdklib.prototype.createPredict = function (req,res) {
 	};
 	this.machinelearning.createRealtimeEndpoint(params, function(err, data) {
 
-	  if (err) console.log(err, err.stack); // an error occurred
+	  if (err) this.console.printConsole(err, err.stack); // an error occurred
 	  else    {
-	    console.log(data);           // successful response
-	    console.log('--------------------INFO---------------------------');
+	    this.console.printConsole(data);           // successful response
+	    this.console.printConsole('--------------------INFO---------------------------');
 	    console.dir(data.RealtimeEndpointInfo.EndpointUrl);         
 	    this.realTimeEndPointUrl = data.RealtimeEndpointInfo.EndpointUrl;
 	    var params = {
@@ -162,13 +166,42 @@ sdklib.prototype.createPredict = function (req,res) {
 	      }
 	    };
 	    this.machinelearning.predict(params, function(err, data) {
-	      if (err) console.log(err, err.stack); // an error occurred
+	      if (err) this.console.printConsole(err, err.stack); // an error occurred
 	      else {
-	      	console.log(data);           // successful response
+	      	this.console.printConsole(data);           // successful response
 	      	res.send(data);
 	      }
 	    }.bind(this));
 	  }     
+	}.bind(this));
+};	
+//-------------------------DESCRIBE--------------------------------
+sdklib.prototype.describeDataSources = function (req,res) {
+	this.console.printConsole('describeDataSources Method');
+	var params = {
+	    FilterVariable: 'Name', /* required */
+	    EQ: this.dsName,
+	};
+	this.machinelearning.describeDataSources(params, function(err, data) {
+		if (err) this.console.printConsole(err, err.stack); // an error occurred
+		else {
+	      	this.console.printConsole(data);           // successful response
+	      	res.send(data);
+      	}
+	}.bind(this));
+};	
+sdklib.prototype.describeMLModels = function (req,res) {
+	this.console.printConsole('describeMLModels Method');
+	var params = {
+	    FilterVariable: 'Name', /* required */
+	    EQ: this.mlName,
+	};
+	this.machinelearning.describeMLModels(params, function(err, data) {
+		if (err) this.console.printConsole(err, err.stack); // an error occurred
+		else {
+	      	this.console.printConsole(data);           // successful response
+	      	res.send(data);
+      	}
 	}.bind(this));
 };	
 sdklib.prototype.describeEvaluations = function (req,res) {
@@ -178,23 +211,38 @@ sdklib.prototype.describeEvaluations = function (req,res) {
 		EQ: this.mlId,
 	};
 	this.machinelearning.describeEvaluations(params, function(err, data) {
-		if (err) console.log(err, err.stack); // an error occurred
+		if (err) this.console.printConsole(err, err.stack); // an error occurred
 		else {
-	      	console.log(data);           // successful response
+	      	this.console.printConsole(data);           // successful response
 	      	res.send(data);
       	}
 	}.bind(this));
 };	
-sdklib.prototype.describeDataSources = function (req,res) {
-	this.console.printConsole('describeDataSources Method');
+//-------------------------GET--------------------------------
+sdklib.prototype.getDataSource = function (req,res) {
+	this.console.printConsole('getDataSource Method');
 	var params = {
-	    FilterVariable: 'Name', /* required */
-	    EQ: this.dsName,
+	  DataSourceId: this.dsId /* required */,
+	  Verbose: true
 	};
-	this.machinelearning.describeDataSources(params, function(err, data) {
-		if (err) console.log(err, err.stack); // an error occurred
+	this.machinelearning.getDataSource(params, function(err, data) {
+		if (err) this.console.printConsole(err, err.stack); // an error occurred
 		else {
-	      	console.log(data);           // successful response
+	      	this.console.printConsole(data);           // successful response
+	      	res.send(data);
+      	}
+	}.bind(this));
+};	
+sdklib.prototype.getMLModel = function (req,res) {
+	this.console.printConsole('getMLModel Method');
+	var params = {
+	  MLModelId: this.mlId /* required */,
+	  Verbose: true
+	};
+	this.machinelearning.getMLModel(params, function(err, data) {
+		if (err) this.console.printConsole(err, err.stack); // an error occurred
+		else {
+	      	this.console.printConsole(data);           // successful response
 	      	res.send(data);
       	}
 	}.bind(this));
@@ -205,28 +253,15 @@ sdklib.prototype.getEvaluation = function (req,res) {
 	  EvaluationId: this.evalId /* required */
 	};
 	this.machinelearning.getEvaluation(params, function(err, data) {
-		if (err) console.log(err, err.stack); // an error occurred
+		if (err) this.console.printConsole(err, err.stack); // an error occurred
 		else {
-	      	console.log(data);           // successful response
+	      	this.console.printConsole(data);           // successful response
 	      	res.send(data);
       	}
 	}.bind(this));
 };	
-sdklib.prototype.getDataSource = function (req,res) {
-	this.console.printConsole('getDataSource Method');
-	var params = {
-	  DataSourceId: this.dsId /* required */,
-	  Verbose: true
-	};
-	this.machinelearning.getDataSource(params, function(err, data) {
-		if (err) console.log(err, err.stack); // an error occurred
-		else {
-	      	console.log(data);           // successful response
-	      	res.send(data);
-      	}
-	}.bind(this));
-};	
-sdklib.prototype.waitForDataSourceName = function () {
+//-------------------------WAIT--------------------------------
+sdklib.prototype.waitForDataSourceName = function (req,res) {
 	this.console.printConsole('waitForDataSource Method');
 	this.console.printConsole('This is DS Nmae :::::: ' + this.dsName);
 	var paramsDS = {
@@ -235,17 +270,18 @@ sdklib.prototype.waitForDataSourceName = function () {
 	};
 	this.machinelearning.waitFor('dataSourceAvailable', paramsDS, function(err, data) {
 	  this.console.printConsole('-------------------- waitFor ::  dataSourceAvailable --------------------');
-	  	if (err) console.log(err, err.stack); // an error occurred
+	  	if (err) this.console.printConsole(err, err.stack); // an error occurred
 	  	else {
-	  		console.log(data);           // successful response
+	  		this.console.printConsole(data);           // successful response
 	  		this.console.printConsole(data.Results[0].Status);
 	  		if(data.Results[0].Status.toUpperCase() === 'COMPLETED'.toUpperCase()) {
-	  			this.console.printConsole('Status is completed as per the ----------------');
-  		}
+	  			this.console.printConsole('---------------- Status is completed as per the ----------------');
+  			}
+  			res.send(data);
 	  } 
 	}.bind(this));
 };	
-sdklib.prototype.waitForMLModel = function () {
+sdklib.prototype.waitForMLModel = function (req,res) {
 	this.console.printConsole('waitForMLModel Method');
 	this.console.printConsole('This is MLMdel Nmae :::::: ' + this.mlName);
 	var paramsDS = {
@@ -254,17 +290,18 @@ sdklib.prototype.waitForMLModel = function () {
 	};
 	this.machinelearning.waitFor('mLModelAvailable', paramsDS, function(err, data) {
 	  	this.console.printConsole('-------------------- waitFor ::  mLModelAvailable --------------------');
-	  	if (err) console.log(err, err.stack); // an error occurred
+	  	if (err) this.console.printConsole(err, err.stack); // an error occurred
 	  	else {
-	  		console.log(data);           // successful response
+	  		this.console.printConsole(data);           // successful response
 	  		this.console.printConsole(data.Results[0].Status);
 	  		if(data.Results[0].Status.toUpperCase() === 'COMPLETED'.toUpperCase()) {
 	  			this.console.printConsole('ML Model ID ::' + this.mlId  + ' :: Status is completed as per the ----------------');
   			}
+  			res.send(data);
 	  	} 
 	}.bind(this));
 };	
-sdklib.prototype.waitForEvaluation = function () {
+sdklib.prototype.waitForEvaluation = function (req,res) {
 	this.console.printConsole('Evaluation Method');
 	this.console.printConsole('This is Evaluation Nmae :::::: ' + this.evalName);
 	var paramsDS = {
@@ -273,16 +310,119 @@ sdklib.prototype.waitForEvaluation = function () {
 	};
 	this.machinelearning.waitFor('evaluationAvailable', paramsDS, function(err, data) {
 	  	this.console.printConsole('-------------------- waitFor ::  mLModelAvailable --------------------');
-	  	if (err) console.log(err, err.stack); // an error occurred
+	  	if (err) this.console.printConsole(err, err.stack); // an error occurred
 	  	else {
-	  		console.log(data);           // successful response
+	  		this.console.printConsole(data);           // successful response
 	  		this.console.printConsole(data.Results[0].Status);
 	  		if(data.Results[0].Status.toUpperCase() === 'COMPLETED'.toUpperCase()) {
 	  			this.console.printConsole('Evaluation ID ::' + this.evalId  + ' :: Status is completed as per the ----------------');
   			}
+  			res.send(data);
 	  	} 
 	}.bind(this));
 };	
+//-------------------------UPDATE--------------------------------
+sdklib.prototype.updateDataSource = function (req,res) {
+	this.console.printConsole('updateDataSource Method');
+	var params = {
+	  DataSourceId: this.dsId, /* required */
+	  DataSourceName: 'changed-' + this.dsName /* required */
+	};
+	this.machinelearning.updateDataSource(params, function(err, data) {
+	  	if (err) this.console.printConsole(err, err.stack); // an error occurred
+	  	else {
+	  		this.console.printConsole(data);           // successful response
+  			res.send(data);
+	  	} 
+	}.bind(this));
+};	
+sdklib.prototype.updateMLModel = function (req,res) {
+	this.console.printConsole('updateMLModel Method');
+	var params = {
+	  MLModelId: this.mlId, /* required */
+	  MLModelName: 'changed-' + this.mlName,
+	  ScoreThreshold: 0.0
+	};
+	this.machinelearning.updateMLModel(params, function(err, data) {
+	  	if (err) this.console.printConsole(err, err.stack); // an error occurred
+	  	else {
+	  		this.console.printConsole(data);           // successful response
+  			res.send(data);
+	  	} 
+	}.bind(this));
+};
+sdklib.prototype.updateEvaluation = function (req,res) {
+	this.console.printConsole('updateEvaluation Method');
+	var params = {
+	  EvaluationId: this.evalId,
+	  EvaluationName: 'changed-' + this.evalName /* required */
+	};
+	this.machinelearning.updateEvaluation(params, function(err, data) {
+	  	if (err) this.console.printConsole(err, err.stack); // an error occurred
+	  	else {
+	  		this.console.printConsole(data);           // successful response
+  			res.send(data);
+	  	} 
+	}.bind(this));
+};
+//-------------------------Delete--------------------------------
+sdklib.prototype.deleteDataSource = function (req,res) {
+	this.console.printConsole('deleteDataSource Method');
+	var params = {
+	  DataSourceId: this.dsId /* required */
+	};
+	this.machinelearning.deleteDataSource(params, function(err, data) {
+	  	if (err) this.console.printConsole(err, err.stack); // an error occurred
+	  	else {
+	  		this.console.printConsole(data);           // successful response
+  			res.send(data);
+	  	} 
+	}.bind(this));
+};
+sdklib.prototype.deleteMLModel  = function (req,res) {
+	this.console.printConsole('deleteMLModel  Method');
+	var params = {
+	  MLModelId: this.mlId /* required */
+	};
+	this.machinelearning.deleteMLModel (params, function(err, data) {
+	  	if (err) this.console.printConsole(err, err.stack); // an error occurred
+	  	else {
+	  		this.console.printConsole(data);           // successful response
+  			res.send(data);
+	  	} 
+	}.bind(this));
+};
+sdklib.prototype.deleteEvaluation  = function (req,res) {
+	this.console.printConsole('deleteEvaluation  Method');
+	var params = {
+	  EvaluationId: this.evalId /* required */
+	};
+	this.machinelearning.deleteEvaluation (params, function(err, data) {
+	  	if (err) this.console.printConsole(err, err.stack); // an error occurred
+	  	else {
+	  		this.console.printConsole(data);           // successful response
+  			res.send(data);
+	  	} 
+	}.bind(this));
+};
+sdklib.prototype.deleteRealtimeEndpoint  = function (req,res) {
+	this.console.printConsole('deleteRealtimeEndpoint  Method');
+	var params = {
+	  MLModelId: this.mlId /* required */
+	};
+	this.machinelearning.deleteRealtimeEndpoint (params, function(err, data) {
+	  	if (err) this.console.printConsole(err, err.stack); // an error occurred
+	  	else {
+	  		this.console.printConsole(data);           // successful response
+  			res.send(data);
+	  	} 
+	}.bind(this));
+};
+
+//--------------------------PENDING-----------------------------------------------------
+// (AWS.Request) addTags(params = {}, callback)
+// (AWS.Request) describeTags(params = {}, callback)
+// (AWS.Request) deleteTags(params = {}, callback)
 
 
 module.exports = new sdklib();
